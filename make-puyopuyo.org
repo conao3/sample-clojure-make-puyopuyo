@@ -330,3 +330,71 @@ In the cljs.user ns, controls can be called without ns ie. (conns) instead of (f
 ClojureScript 1.12.42
 cljs.user=>
 #+end_src
+
+** [Stage 01] ぷよぷよを作ってみよう
+(イントロダクション)
+
+** [Stage 02] 開発環境を用意しよう
+ここまででReactが動くようになっているはず。以上。
+
+** [Stage 03] ステージを作ってみよう
+*** アプリ用のエントリーポイントを作る
+=puyopuyo.cljs= はアプリのエントリーポイントのため、別ファイルにアプリ用のファイルを作る。
+
+#+begin_src clojure :caption src/conao3/puyopuyo/cljs/app.cljs
+(ns conao3.puyopuyo.cljs.app)
+
+(defn App []
+  [:div "hello"])
+#+end_src
+
+そしてこのコンポーネントを利用するようにする。
+
+#+begin_src clojure :caption src/conao3/puyopuyo/cljs/puyopuyo.cljs
+(ns ^:figwheel-hooks conao3.puyopuyo.cljs.puyopuyo
+  (:require
+   ...
+   [conao3.puyopuyo.cljs.app :as c.cljs.app]))
+
+(defn ^:after-load init []
+  (let [root (-> js/document (.getElementById "app") reagent.dom.client/create-root)]
+    (reagent.dom.client/render root [c.cljs.app/App])))
+#+end_src
+
+*** ステージを作る
+=config= に設定値を集める宗派のようです。
+
+#+begin_src clojure :caption src/conao3/puyopuyo/cljs/puyopuyo.cljs
+(ns conao3.puyopuyo.cljs.app)
+
+(def config
+  {:puyo-image-width 40
+   :puyo-image-height 40
+   :stage {:cols 6
+           :rows 12
+           :background-color "#11213b"}})
+
+(defn Stage []
+  [:div {:style {:width (str (* (-> config :puyo-image-width) (-> config :stage :cols)) "px")
+                 :height (str (* (-> config :puyo-image-height) (-> config :stage :rows)) "px")
+                 :background "url(sega-img/puyo_2bg.png)"
+                 :background-color (-> config :stage :background-color)}}])
+(defn App []
+  [Stage])
+#+end_src
+
+[[./img/37e4c1d4-7cd0-4f8c-af63-1f31100acabb.png]]
+
+** [Stage 04] ぷよを表示させてみよう
+** [Stage 05] 自由落下させてみよう
+** [Stage 06] ぷよを消してみよう
+** [Stage 07] 全消しを作ってみよう
+** [Stage 08] プレイヤー操作のぷよを落下させてみよう
+** [Stage 09] ↓キーで落下速度を増してみよう
+** [Stage 10] 左右に動かせるようにしよう
+** [Stage 11] 回転させてみよう
+** [Stage 12] ネクストぷよを出してみよう
+** [Stage 13] スコアを表示しよう
+** [Stage 14] ゲームオーバー画面を作ろう
+** [Stage 15] スマートフォン対応してみよう
+
