@@ -1,0 +1,19 @@
+{
+  "name": "section02",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.18.0",
+  "dependencies": {
+    "process": "^0.11.10",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "scheduler": "^0.27.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  }
+}
