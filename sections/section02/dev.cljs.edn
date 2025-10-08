@@ -1,0 +1,3 @@
+^{:auto-bundle :webpack}
+{:main conao3.puyopuyo.cljs.puyopuyo
+ :output-dir "resources-dev/public/dist/js"}
