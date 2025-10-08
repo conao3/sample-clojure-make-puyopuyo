@@ -1,0 +1,156 @@
+#+title: make puyopuyo
+#+author: conao3
+
+#+options: ^:nil
+
+* Clojureプロジェクトの開始
+section01からスタートします。以下の内容になっています。
+
+tips: 以下の出力を得るoneliner。
+#+begin_src sh
+git ls-files | sort | bb -i -e '(doseq [l *input*] (println (str "echo '\''#+begin_src fundamental :caption " l "'\''; cat " l "; echo '\''#+end_src'\''; echo")))' | bash
+#+end_src
+
+#+begin_src clojure :caption build.clj
+(ns build
+  (:require
+   [clojure.tools.build.api :as b]))
+
+(def lib 'conao3/puyopuyo)
+(def main 'conao3.puyopuyo)
+(def version (format "0.1.%s" (b/git-count-revs nil)))
+(def class-dir "target/classes")
+(def jar-file (format "target/%s.jar" (namespace lib)))
+(def uber-file (format "target/%s-standalone.jar" (name lib)))
+(def basis (delay (b/create-basis)))
+
+(defn jar [_]
+  (b/write-pom {:class-dir class-dir
+                :lib lib
+                :version version
+                :basis @basis
+                :src-dirs ["src"]})
+  (b/copy-dir {:src-dirs ["src" "resources"]
+               :target-dir class-dir})
+  (b/jar {:class-dir class-dir
+          :jar-file jar-file}))
+
+(defn uber [_]
+  (b/copy-dir {:src-dirs ["src" "resources"]
+               :target-dir class-dir})
+  (b/compile-clj {:basis @basis
+                  :ns-compile [main]
+                  :class-dir class-dir})
+  (b/uber {:class-dir class-dir
+           :uber-file uber-file
+           :basis @basis
+           :main main}))
+#+end_src
+
+#+begin_src clojure :caption deps.edn
+{:paths ["src" "resources"]
+ :deps
+ {org.clojure/clojure {:mvn/version "1.12.2"}
+  com.github.clj-easy/graal-build-time {:mvn/version "1.0.5"}}
+
+ :aliases
+ {:dev {:extra-paths ["dev" "resources-dev"]
+        :extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}
+                     com.stuartsierra/component.repl {:mvn/version "1.0.0"}}}
+  :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
+                       cider/cider-nrepl {:mvn/version "0.57.0"}
+                       cider/piggieback {:mvn/version "0.6.1"}}
+         :jvm-opts ["-Djdk.attach.allowAttachSelf"]}
+  :repl {:main-opts ["-m" "nrepl.cmdline"
+                     "--interactive"
+                     "--middleware" "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}
+  :test {:main-opts ["-e" "(require 'dev)" "-m" "kaocha.runner"]}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
+          :ns-default build
+          :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}}
+#+end_src
+
+#+begin_src clojure :caption dev/dev.clj
+(ns dev)
+#+end_src
+
+#+begin_src clojure :caption dev/user.clj
+(ns user)
+#+end_src
+
+#+begin_src conf :caption .gitignore
+/.cpcache
+/target
+#+end_src
+
+#+begin_src makefile :caption Makefile
+.PHONY: all
+all: native
+
+UNAME_OS := $(shell uname -s)
+
+ifeq ($(UNAME_OS),Darwin)
+GRAAL_BUILD_ARGS += -H:-CheckToolchain
+endif
+
+.PHONY: repl
+repl:
+	clj -M:dev:repl
+
+.PHONY: update
+update:
+	clojure -Sdeps '{:deps {org.slf4j/slf4j-simple {:mvn/version "RELEASE"} com.github.liquidz/antq {:mvn/version "RELEASE"}}}' -M -m antq.core --upgrade --force
+
+.PHONY: test
+test:
+	clojure -M:dev:test
+
+.PHONY: uber
+uber: target/puyopuyo-standalone.jar
+
+target/puyopuyo-standalone.jar:
+	clojure -T:build uber
+
+.PHONY: native
+native: target/puyopuyo
+
+target/puyopuyo: target/puyopuyo-standalone.jar
+	native-image -jar $< \
+	--features=clj_easy.graal_build_time.InitClojureClasses \
+	--verbose \
+	--no-fallback \
+	$(GRAAL_BUILD_ARGS) \
+	$@
+
+.PHONY: clean
+clean:
+	rm -rf target
+#+end_src
+
+#+begin_src clojure :caption src/conao3/puyopuyo.clj
+(ns conao3.puyopuyo
+  (:gen-class))
+
+(defn add [a b]
+  (+ a b))
+
+(defn -main [& args]
+  (println "Hello World," args))
+#+end_src
+
+#+begin_src clojure :caption test/conao3/puyopuyo_test.clj
+(ns conao3.puyopuyo-test
+  (:require
+   [clojure.test :as t]
+   [conao3.puyopuyo :as c.puyopuyo]))
+
+(t/deftest add-test
+  (t/is (= 3 (c.puyopuyo/add 1 2))))
+#+end_src
+
+#+begin_src clojure :caption tests.edn
+#kaocha/v1
+{}
+#+end_src
+
+* 
