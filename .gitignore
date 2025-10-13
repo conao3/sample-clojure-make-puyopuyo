@@ -1,5 +1,6 @@
 /.direnv
-/.clj-kondo
+/.clj-kondo/*
+!/.clj-kondo/config.edn
 /.lsp
 /.cpcache
 /.nrepl-port
