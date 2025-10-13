@@ -25,31 +25,45 @@
 
    :falling-speed 6})
 
-(defn GameFrame [{:keys [debug frame delta-frame]} & children]
+(defn get-puyo-info [board x y]
+  (let [rows (-> board count)
+        cols (-> board first count)]
+    (cond
+      (or (< x 0) (<= cols x) (<= rows y)) -1
+      (< y 0) nil
+      :else (-> board (get x) (get y)))))
+
+(defn DebugPanel [request-id frame last-timestamp delta-frame fps game-state]
+  [:div {:style {:position :absolute
+                 :top 0
+                 :background :white
+                 :width "200px"
+                 :border "1px solid"}}
+   [:div "request-id: " @request-id]
+   [:div "frame: " @frame]
+   [:div "last-timestamp: " @last-timestamp]
+   [:div "delta-frame: " @delta-frame]
+   [:div "fps: " @fps]
+   [:div "game-state: " @game-state]])
+
+(defn GameFrame [debug game-state frame delta-frame & children]
   (r/with-let [request-id (r/atom nil)
                last-timestamp (r/atom (.now js/performance))
                fps (r/atom nil)
                callback (fn callback [timestamp]
                           (swap! frame inc)
-                          (reset! delta-frame (-> (- timestamp @last-timestamp) (.toFixed 2)))
-                          (reset! fps (-> (/ @delta-frame) (* 1000) (.toFixed 2)))
-
+                          (let [delta (- timestamp @last-timestamp)]
+                            (reset! delta-frame (.toFixed delta 2))
+                            (reset! fps (.toFixed (/ 1000 delta) 2)))
+                          (when (= @game-state :start)
+                            (reset! game-state :check-falling-puyo))
                           (reset! last-timestamp timestamp)
                           (reset! request-id (js/requestAnimationFrame callback)))
                _ (reset! request-id (js/requestAnimationFrame callback))]
     (if debug
       [:div {:style {:display :relative}}
        (into [:div] children)
-       [:div {:style {:position :absolute
-                      :top 0
-                      :background :white
-                      :width "200px"
-                      :border "1px solid"}}
-        [:div "request-id: " @request-id]
-        [:div "frame: " @frame]
-        [:div "last-timestamp: " @last-timestamp]
-        [:div "delta-frame: " @delta-frame]
-        [:div "fps: " @fps]]]
+       [DebugPanel request-id frame last-timestamp delta-frame fps game-state]]
       (into [:div] children))
     (finally
       (when @request-id
@@ -68,23 +82,22 @@
        (->> (for [[y row] (map-indexed vector @puyo-board)
                   [x elm] (map-indexed vector row)]
               [y x elm])
-            (map (fn [[y x elm]]
-                   (when elm
-                     [:img
-                      {:key (str y "_" x)
-                       :src (str "sega-img/puyo_" elm ".png")
-                       :width (-> config :puyo-image-width)
-                       :height (-> config :puyo-image-height)
-                       :style {:position :absolute
-                               :left (str (* (-> config :puyo-image-width) x) "px")
-                               :top (str (* (-> config :puyo-image-height) y) "px")}}]))))])))
+            (keep (fn [[y x elm]]
+                    (when elm
+                      ^{:key (str y "_" x)}
+                      [:img
+                       {:src (str "sega-img/puyo_" elm ".png")
+                        :width (-> config :puyo-image-width)
+                        :height (-> config :puyo-image-height)
+                        :style {:position :absolute
+                                :left (str (* (-> config :puyo-image-width) x) "px")
+                                :top (str (* (-> config :puyo-image-height) y) "px")}}]))))])))
 
 (defn App []
-  (r/with-let [frame (r/atom 0)
+  (r/with-let [game-state (r/atom :start)
+               frame (r/atom 0)
                delta-frame (r/atom nil)]
-    [GameFrame {:debug true
-                :frame frame
-                :delta-frame delta-frame}
+    [GameFrame true game-state frame delta-frame
      [:div {:style {:display :flex
                     :justify-content :center}}
       [Stage]]]))
