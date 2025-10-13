@@ -386,7 +386,6 @@ cljs.user=>
 [[./img/37e4c1d4-7cd0-4f8c-af63-1f31100acabb.png]]
 
 ** [Stage 04] ぷよを表示させてみよう
-
 =initial-board= の情報を元に初期盤面を描画します。
 
 #+begin_src clojure :caption src/conao3/puyopuyo/cljs/puyopuyo.cljs
@@ -435,9 +434,76 @@ cljs.user=>
                                :top (str (* (-> config :puyo-image-height) y) "px")}}]))))])))
 #+end_src
 
+ここでreagentにおける状態管理を紹介します。
+
+まず普通の =let= で =r/atom= の変数 =puyo-board= を宣言します。
+そして関数を返却します。このようにすることで =puyo-board= はクロージャとしてこの関数に自然に束縛されることになります。
+=r/atom= と、この =r/atom= の変数をderefしたコンポーネントをreagentが管理しているため、ある =r/atom= が変更されたとき再レンダーすべきコンポーネントのみ再レンダーされます。
+
+単純にHiccupの式を返却するコンポーネントを =Form1= 、このように関数を返却するコンポーネントを =Form2= と呼びます。
+
 [[./img/22302632-f8a3-4603-97f0-bc9ab76b6085.png]]
 
 ** [Stage 05] 自由落下させてみよう
+*** ゲームループの導入
+ゲームループのような、定期的に呼び出されるメソッドをブラウザに登録するためには [[https://developer.mozilla.org/ja/docs/Web/API/Window/requestAnimationFrame][window.requestAnimationFrame]] を用います。
+
+=App= にframeとdelta-frameを持たせて、 =GameFrame= というコンポーネントにゲームループの管理とデバッグ表示をする機能を持たせましょう。
+
+#+begin_src clojure
+(defn GameFrame [{:keys [debug frame delta-frame]} & children]
+  (r/with-let [request-id (r/atom nil)
+               last-timestamp (r/atom (.now js/performance))
+               fps (r/atom nil)
+               callback (fn callback [timestamp]
+                          (swap! frame inc)
+                          (reset! delta-frame (-> (- timestamp @last-timestamp) (.toFixed 2)))
+                          (reset! fps (-> (/ @delta-frame) (* 1000) (.toFixed 2)))
+
+                          (reset! last-timestamp timestamp)
+                          (reset! request-id (js/requestAnimationFrame callback)))
+               _ (reset! request-id (js/requestAnimationFrame callback))]
+    (if debug
+      [:div {:style {:display :relative}}
+       (into [:div] children)
+       [:div {:style {:position :absolute
+                      :top 0
+                      :background :white
+                      :width "200px"
+                      :border "1px solid"}}
+        [:div "request-id: " @request-id]
+        [:div "frame: " @frame]
+        [:div "last-timestamp: " @last-timestamp]
+        [:div "delta-frame: " @delta-frame]
+        [:div "fps: " @fps]]]
+      (into [:div] children))
+    (finally
+      (when @request-id
+        (js/cancelAnimationFrame @request-id)))))
+
+(defn App []
+  (r/with-let [frame (r/atom 0)
+               delta-frame (r/atom nil)]
+    [GameFrame {:debug true
+                :frame frame
+                :delta-frame delta-frame}
+     [:div {:style {:display :flex
+                    :justify-content :center}}
+      [Stage]]]))
+#+end_src
+
+[[./img/c1840d4e-2e6a-4439-a0e6-23ec33eb7eb4.png]]
+
+ここで =r/with-let= が登場しました。これは先程登場した =Form2= を簡単に返却できるマクロです。
+
+さらに =GameFrame= コンポーネントでは =finally= というキーワードを使用しています。
+これはコンポーネントがunmountされたときに実行される処理を定義するものです。これはreactのクラスコンポーネントを返却する =Form3= という定義方法が必要なのですが、 =r/with-let= の =finally= を伴う使用方法で実現することもできます。
+
+=let= と =fn= による =Form2= の定義方法はreagentを理解する上でとても重要ですが、ここからは見た目の簡潔さを重視して =r/with-let= を使っていきます。
+
+*** ぷよを自由落下させる
+
+
 ** [Stage 06] ぷよを消してみよう
 ** [Stage 07] 全消しを作ってみよう
 ** [Stage 08] プレイヤー操作のぷよを落下させてみよう

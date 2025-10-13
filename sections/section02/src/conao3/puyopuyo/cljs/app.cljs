@@ -21,7 +21,39 @@
                    [0 0 0 0 0 0]
                    [1 1 0 0 2 2]
                    [0 0 2 2 0 0]
-                   [4 4 0 0 5 5]]})
+                   [4 4 0 0 5 5]]
+
+   :falling-speed 6})
+
+(defn GameFrame [{:keys [debug frame delta-frame]} & children]
+  (r/with-let [request-id (r/atom nil)
+               last-timestamp (r/atom (.now js/performance))
+               fps (r/atom nil)
+               callback (fn callback [timestamp]
+                          (swap! frame inc)
+                          (reset! delta-frame (-> (- timestamp @last-timestamp) (.toFixed 2)))
+                          (reset! fps (-> (/ @delta-frame) (* 1000) (.toFixed 2)))
+
+                          (reset! last-timestamp timestamp)
+                          (reset! request-id (js/requestAnimationFrame callback)))
+               _ (reset! request-id (js/requestAnimationFrame callback))]
+    (if debug
+      [:div {:style {:display :relative}}
+       (into [:div] children)
+       [:div {:style {:position :absolute
+                      :top 0
+                      :background :white
+                      :width "200px"
+                      :border "1px solid"}}
+        [:div "request-id: " @request-id]
+        [:div "frame: " @frame]
+        [:div "last-timestamp: " @last-timestamp]
+        [:div "delta-frame: " @delta-frame]
+        [:div "fps: " @fps]]]
+      (into [:div] children))
+    (finally
+      (when @request-id
+        (js/cancelAnimationFrame @request-id)))))
 
 (defn Stage []
   (let [puyo-board (r/atom (->> (config :initial-board)
@@ -48,4 +80,11 @@
                                :top (str (* (-> config :puyo-image-height) y) "px")}}]))))])))
 
 (defn App []
-  [Stage])
+  (r/with-let [frame (r/atom 0)
+               delta-frame (r/atom nil)]
+    [GameFrame {:debug true
+                :frame frame
+                :delta-frame delta-frame}
+     [:div {:style {:display :flex
+                    :justify-content :center}}
+      [Stage]]]))
