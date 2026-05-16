@@ -71,8 +71,7 @@
 
 (defn Stage []
   (let [puyo-board (r/atom (->> (config :initial-board)
-                                (clojure.walk/postwalk (fn [elm] (if (zero? elm) nil elm)))))
-        puyo-count (r/atom (->> (for [row @puyo-board item row] item) (filter some?) count))]
+                                (clojure.walk/postwalk (fn [elm] (if (zero? elm) nil elm)))))]
     (fn []
       [:div {:style {:width (str (* (-> config :puyo-image-width) (-> config :stage :cols)) "px")
                      :height (str (* (-> config :puyo-image-height) (-> config :stage :rows)) "px")
