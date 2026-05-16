@@ -1,23 +1,23 @@
 {:paths ["src" "resources"]
  :deps
- {org.clojure/clojure {:mvn/version "1.12.2"}
-  org.clojure/tools.logging {:mvn/version "1.3.0"}
-  org.slf4j/slf4j-simple {:mvn/version "2.0.17"}
+ {org.clojure/clojure {:mvn/version "1.12.5"}
+  org.clojure/tools.logging {:mvn/version "1.3.1"}
+  org.slf4j/slf4j-simple {:mvn/version "2.0.18"}
 
   ;; cljs
-  org.clojure/clojurescript {:mvn/version "1.12.42"}
+  org.clojure/clojurescript {:mvn/version "1.12.145"}
   com.bhauman/figwheel-main {:mvn/version "0.2.20"}
-  reagent/reagent {:mvn/version "2.0.0-alpha3"}
+  reagent/reagent {:mvn/version "2.0.1"}
 
   ;; graal
-  com.github.clj-easy/graal-build-time {:mvn/version "1.0.5"}}
+  com.github.clj-easy/graal-build-time {:mvn/version "1.0.6"}}
 
  :aliases
  {:dev {:extra-paths ["dev" "resources-dev"]
         :extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}
                      com.stuartsierra/component.repl {:mvn/version "1.0.0"}}}
-  :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.4.0"}
-                       cider/cider-nrepl {:mvn/version "0.57.0"}
+  :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.7.0"}
+                       cider/cider-nrepl {:mvn/version "0.59.0"}
                        cider/piggieback {:mvn/version "0.6.1"}}
           :jvm-opts ["-Djdk.attach.allowAttachSelf"]}
   :repl {:main-opts ["-m" "nrepl.cmdline"
@@ -26,6 +26,6 @@
   :repl-cljs {:main-opts ["-m" "figwheel.main" "--build" "dev" "--repl"
                           "--middleware" "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}
   :test {:main-opts ["-e" "(require 'dev)" "-m" "kaocha.runner"]}
-  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.13"}}
           :ns-default build
           :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}}
