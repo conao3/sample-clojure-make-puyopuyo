@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        section: [section01, section02]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: DeLaGuardo/setup-clojure@13.4
+        with:
+          cli: latest
+          clj-kondo: latest
+          cljstyle: latest
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+            ~/.deps.clj
+          key: deps-${{ matrix.section }}-${{ hashFiles(format('sections/{0}/deps.edn', matrix.section)) }}
+          restore-keys: deps-${{ matrix.section }}-
+
+      - name: clj-kondo
+        run: clj-kondo --lint sections/${{ matrix.section }}/src sections/${{ matrix.section }}/test sections/${{ matrix.section }}/dev sections/${{ matrix.section }}/build.clj
+
+      - name: cljstyle
+        run: cljstyle check --no-color sections/${{ matrix.section }}
+
+      - name: test
+        working-directory: sections/${{ matrix.section }}
+        run: clojure -M:dev:test

@@ -1,7 +1,7 @@
 (ns ^:figwheel-hooks conao3.puyopuyo.cljs.puyopuyo
   (:require
-   [reagent.dom.client :as reagent.dom.client]
-   [conao3.puyopuyo.cljs.app :as c.cljs.app]))
+   [conao3.puyopuyo.cljs.app :as c.cljs.app]
+   [reagent.dom.client :as reagent.dom.client]))
 
 (enable-console-print!)
 
