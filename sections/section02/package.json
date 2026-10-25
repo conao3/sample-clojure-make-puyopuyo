@@ -8,12 +8,12 @@
   "packageManager": "pnpm@10.18.0",
   "dependencies": {
     "process": "^0.11.10",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "scheduler": "^0.27.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "scheduler": "^0.28.0"
   },
   "devDependencies": {
-    "webpack": "^5.106.2",
-    "webpack-cli": "^7.0.2"
+    "webpack": "^5.112.2",
+    "webpack-cli": "^7.2.3"
   }
 }
