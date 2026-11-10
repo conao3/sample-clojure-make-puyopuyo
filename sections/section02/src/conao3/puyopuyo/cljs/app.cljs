@@ -34,17 +34,21 @@
       :else (-> board (get x) (get y)))))
 
 (defn DebugPanel [request-id frame last-timestamp delta-frame fps game-state]
-  [:div {:style {:position :absolute
-                 :top 0
-                 :background :white
-                 :width "200px"
-                 :border "1px solid"}}
-   [:div "request-id: " @request-id]
-   [:div "frame: " @frame]
-   [:div "last-timestamp: " @last-timestamp]
-   [:div "delta-frame: " @delta-frame]
-   [:div "fps: " @fps]
-   [:div "game-state: " @game-state]])
+  (r/with-let [delta-frame-disp (r/atom @delta-frame)
+               interval-id (js/setInterval #(reset! delta-frame-disp @delta-frame) 500)]
+    [:div {:style {:position :absolute
+                   :top 0
+                   :background :white
+                   :width "200px"
+                   :border "1px solid"}}
+     [:div "request-id: " @request-id]
+     [:div "frame: " @frame]
+     [:div "last-timestamp: " @last-timestamp]
+     [:div "delta-frame: " @delta-frame-disp]
+     [:div "fps: " @fps]
+     [:div "game-state: " @game-state]]
+    (finally
+      (js/clearInterval interval-id))))
 
 (defn GameFrame [debug game-state frame delta-frame & children]
   (r/with-let [request-id (r/atom nil)
